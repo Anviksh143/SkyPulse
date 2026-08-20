@@ -1,0 +1,246 @@
+<div class="row g-4 mb-4">
+
+          <!-- MAIN CARD -->
+          <div class="{{ "col-12" if is_compare else "col-lg-5 col-md-12" }}">
+            <div class="main-weather-card glass-card card-enter h-100" id="main-weather-card" style="animation-delay:.05s">
+
+              <!-- Animated Weather Icon -->
+              <div class="wx-icon-wrap wx-{{ w.category }}" id="wx-icon" aria-hidden="true">
+                {% if w.category == 'sunny' %}
+                  <div class="wx-rays" style="position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+                    <div class="wx-rays" style="position:relative;width:96px;height:96px;animation:sun-spin 10s linear infinite;">
+                      {% for i in range(8) %}
+                      <div class="wx-ray-line" style="transform:rotate({{ i * 45 }}deg) translateY(-42px);margin-left:-3px;position:absolute;top:50%;left:50%;"></div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                  <div class="wx-orb" style="width:68px;height:68px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff9c4,#ffd700 40%,#ff9500);box-shadow:0 0 0 10px rgba(255,215,0,.12),0 0 40px rgba(255,215,0,.5);animation:sun-pulse 3s ease-in-out infinite;position:relative;z-index:2;"></div>
+
+                {% elif w.category == 'night' %}
+                  <div class="wx-moon" style="width:64px;height:64px;border-radius:50%;background:transparent;box-shadow:inset -14px -6px 0 2px #f5e79e;filter:drop-shadow(0 0 14px rgba(245,231,158,.5));animation:moon-glow 3s ease-in-out infinite;position:relative;z-index:2;"></div>
+                  {% for cfg in [('8%','68%','1s'),('18%','82%','0s'),('5%','55%','1.5s'),('25%','75%','0.7s'),('12%','90%','0.3s')] %}
+                  <div class="wx-star-dot" style="width:4px;height:4px;top:{{cfg[0]}};left:{{cfg[1]}};animation-duration:2s;animation-delay:{{cfg[2]}};animation-name:star-twinkle;"></div>
+                  {% endfor %}
+
+                {% elif w.category in ['cloudy','partly_cloudy'] %}
+                  <svg class="wx-cloud-svg" width="100" height="70" viewBox="0 0 100 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="60" cy="48" rx="32" ry="20" fill="rgba(200,210,230,0.85)"/>
+                    <ellipse cx="42" cy="52" rx="22" ry="16" fill="rgba(220,228,240,0.9)"/>
+                    <ellipse cx="60" cy="36" rx="22" ry="18" fill="rgba(210,220,235,0.9)"/>
+                    <ellipse cx="40" cy="38" rx="18" ry="16" fill="rgba(230,236,248,0.95)"/>
+                    {% if w.category == 'partly_cloudy' %}
+                    <circle cx="22" cy="20" r="14" fill="rgba(255,215,0,0.9)"/>
+                    <circle cx="22" cy="20" r="14" fill="rgba(255,200,50,0.3)" style="animation:sun-pulse 3s ease-in-out infinite"/>
+                    {% endif %}
+                  </svg>
+
+                {% elif w.category == 'rain' %}
+                  <div style="position:relative;width:100%;height:100%">
+                    <svg style="position:absolute;top:5px;left:50%;transform:translateX(-50%)" width="90" height="50" viewBox="0 0 90 50" fill="none">
+                      <ellipse cx="55" cy="32" rx="28" ry="17" fill="rgba(150,165,190,0.85)"/>
+                      <ellipse cx="38" cy="36" rx="20" ry="13" fill="rgba(170,182,205,0.9)"/>
+                      <ellipse cx="55" cy="24" rx="20" ry="16" fill="rgba(160,175,200,0.9)"/>
+                      <ellipse cx="36" cy="26" rx="16" ry="14" fill="rgba(180,192,215,0.95)"/>
+                    </svg>
+                    <div style="position:absolute;bottom:0;left:0;right:0;height:52px;">
+                      {% for d in [('14%','14px','.0s','.65s'),('28%','18px','.15s','.55s'),('42%','12px','.3s','.7s'),('56%','20px','.1s','.5s'),('70%','15px','.25s','.6s'),('84%','11px','.4s','.75s'),('21%','17px','.35s','.58s')] %}
+                      <div class="wx-drop" style="left:{{d[0]}};width:3px;height:{{d[1]}};animation-delay:{{d[2]}};animation-duration:{{d[3]}};"></div>
+                      {% endfor %}
+                    </div>
+                  </div>
+
+                {% elif w.category == 'storm' %}
+                  <div style="position:relative;width:100%;height:100%">
+                    <svg style="position:absolute;top:0;left:50%;transform:translateX(-50%)" width="90" height="48" viewBox="0 0 90 48" fill="none">
+                      <ellipse cx="55" cy="30" rx="28" ry="16" fill="rgba(60,60,80,0.9)"/>
+                      <ellipse cx="38" cy="34" rx="20" ry="13" fill="rgba(50,50,70,0.95)"/>
+                      <ellipse cx="55" cy="22" rx="20" ry="15" fill="rgba(55,55,75,0.9)"/>
+                      <ellipse cx="36" cy="24" rx="16" ry="13" fill="rgba(65,65,85,0.95)"/>
+                    </svg>
+                    <div style="position:absolute;bottom:2px;left:0;right:0;height:46px;">
+                      {% for d in [('18%','12px','.0s','.6s'),('38%','15px','.2s','.5s'),('60%','11px','.1s','.65s'),('78%','13px','.3s','.55s')] %}
+                      <div class="wx-drop storm-drop" style="left:{{d[0]}};width:3px;height:{{d[1]}};animation-delay:{{d[2]}};animation-duration:{{d[3]}};"></div>
+                      {% endfor %}
+                      <div class="wx-bolt" style="font-size:1.8rem;bottom:0;left:50%;transform:translateX(-50%);position:absolute;">⚡</div>
+                    </div>
+                  </div>
+
+                {% elif w.category == 'snow' %}
+                  <div style="position:relative;width:100%;height:100%">
+                    <svg style="position:absolute;top:5px;left:50%;transform:translateX(-50%)" width="90" height="48" viewBox="0 0 90 48" fill="none">
+                      <ellipse cx="55" cy="32" rx="28" ry="16" fill="rgba(210,225,245,0.9)"/>
+                      <ellipse cx="38" cy="36" rx="20" ry="13" fill="rgba(225,235,250,0.95)"/>
+                      <ellipse cx="55" cy="23" rx="20" ry="16" fill="rgba(218,230,248,0.9)"/>
+                      <ellipse cx="36" cy="25" rx="16" ry="14" fill="rgba(232,240,255,0.95)"/>
+                    </svg>
+                    <div style="position:absolute;bottom:0;left:0;right:0;height:50px;">
+                      {% for d in [('12%','.0s','1.5s'),('26%','.25s','1.8s'),('40%','.5s','1.4s'),('55%','.15s','1.6s'),('68%','.4s','2.0s'),('82%','.3s','1.7s')] %}
+                      <div class="wx-flake" style="left:{{d[0]}};animation-delay:{{d[1]}};animation-duration:{{d[2]}};">❄</div>
+                      {% endfor %}
+                    </div>
+                  </div>
+
+                {% elif w.category == 'fog' %}
+                  <div style="position:relative;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;gap:10px;padding:10px;">
+                    {% for d in [('100%','.0s','1.8s'),('80%','.4s','2.2s'),('90%','.8s','2.0s'),('70%','1.2s','2.5s')] %}
+                    <div class="wx-fog-line" style="width:{{d[0]}};animation-delay:{{d[1]}};animation-duration:{{d[2]}};position:relative;left:0;top:auto;"></div>
+                    {% endfor %}
+                  </div>
+
+                {% else %}
+                  <span class="wx-emoji-icon">{{ w.emoji }}</span>
+                {% endif %}
+              </div>
+
+              <!-- City Info -->
+              <div class="city-header">
+                <div class="city-info">
+                  <h2 class="city-name" id="city-name">{{ w.city }}</h2>
+                  <p class="city-location">
+                    <i class="bi bi-geo-alt-fill me-1"></i>
+                    {% if w.region %}{{ w.region }}, {% endif %}{{ w.country }}
+                  </p>
+                  <p class="local-time"><i class="bi bi-clock me-1"></i>{{ w.local_time }}</p>
+                </div>
+              </div>
+
+              <!-- Temperature -->
+              <div class="temp-display">
+                <div class="temp-main">
+                  <span class="temp-value" id="temp-display" data-c="{{ w.temp_c }}" data-f="{{ w.temp_f }}">{{ w.temp_c }}</span>
+                  <div class="temp-unit-toggle">
+                    <button class="unit-btn active" id="unit-c" onclick="switchUnit('C')" aria-pressed="true">°C</button>
+                    <span class="unit-divider">|</span>
+                    <button class="unit-btn" id="unit-f" onclick="switchUnit('F')" aria-pressed="false">°F</button>
+                  </div>
+                </div>
+                <p class="feels-like">Feels like <strong id="feels-display">{{ w.feels_like_c }}°</strong></p>
+                <p class="weather-condition-text">{{ w.weather_desc }}</p>
+                <div class="temp-range-bar">
+                  <span class="temp-min">{{ w.min_temp_c }}°</span>
+                  <div class="range-bar">
+                    {% set rspan = w.max_temp_c - w.min_temp_c %}
+                    {% set rspan = rspan if rspan > 0 else 1 %}
+                    {% set pct   = ((w.temp_c - w.min_temp_c) * 100 // rspan) %}
+                    {% set pct   = [pct, 100] | min %}
+                    {% set pct   = [pct, 0]   | max %}
+                    <div class="range-fill" style="width:{{ pct }}%;"></div>
+                  </div>
+                  <span class="temp-max">{{ w.max_temp_c }}°</span>
+                </div>
+              </div>
+
+              <!-- Sunrise / Sunset -->
+              <div class="sun-row">
+                <div class="sun-item">
+                  <i class="bi bi-sunrise-fill sun-icon sunrise-color"></i>
+                  <div>
+                    <p class="sun-label">Sunrise</p>
+                    <p class="sun-time">{{ w.sunrise }}</p>
+                  </div>
+                </div>
+                <div class="sun-divider"></div>
+                <div class="sun-item">
+                  <i class="bi bi-sunset-fill sun-icon sunset-color"></i>
+                  <div>
+                    <p class="sun-label">Sunset</p>
+                    <p class="sun-time">{{ w.sunset }}</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- HIGHLIGHTS -->
+          <div class="{{ "col-12" if is_compare else "col-lg-7 col-md-12" }}">
+            <div class="highlights-grid">
+
+              <div class="highlight-card glass-card card-enter" style="animation-delay:.1s">
+                <div class="highlight-icon-wrap humidity-bg"><i class="bi bi-droplet-fill"></i></div>
+                <div class="highlight-body">
+                  <p class="highlight-label">Humidity</p>
+                  <p class="highlight-value">{{ w.humidity }}<span class="highlight-unit">%</span></p>
+                  <div class="highlight-bar"><div class="highlight-bar-fill humidity-fill" style="width:{{ w.humidity }}%"></div></div>
+                  <p class="highlight-note">{% if w.humidity < 30 %}Dry{% elif w.humidity < 60 %}Comfortable{% elif w.humidity < 80 %}Humid{% else %}Very Humid{% endif %}</p>
+                </div>
+              </div>
+
+              <div class="highlight-card glass-card card-enter" style="animation-delay:.15s">
+                <div class="highlight-icon-wrap wind-bg"><i class="bi bi-wind"></i></div>
+                <div class="highlight-body">
+                  <p class="highlight-label">Wind Speed</p>
+                  <p class="highlight-value">{{ w.wind_speed_kmph }}<span class="highlight-unit">km/h</span></p>
+                  <p class="highlight-note"><i class="bi bi-compass me-1"></i>{{ w.wind_dir }}</p>
+                </div>
+              </div>
+
+              <div class="highlight-card glass-card card-enter" style="animation-delay:.2s">
+                <div class="highlight-icon-wrap pressure-bg"><i class="bi bi-speedometer2"></i></div>
+                <div class="highlight-body">
+                  <p class="highlight-label">Pressure</p>
+                  <p class="highlight-value">{{ w.pressure }}<span class="highlight-unit">hPa</span></p>
+                  <p class="highlight-note">{% if w.pressure < 1000 %}Low{% elif w.pressure > 1020 %}High{% else %}Normal{% endif %}</p>
+                </div>
+              </div>
+
+              <div class="highlight-card glass-card card-enter" style="animation-delay:.25s">
+                <div class="highlight-icon-wrap visibility-bg"><i class="bi bi-eye-fill"></i></div>
+                <div class="highlight-body">
+                  <p class="highlight-label">Visibility</p>
+                  <p class="highlight-value">{{ w.visibility }}<span class="highlight-unit">km</span></p>
+                  <p class="highlight-note">{% if w.visibility >= 10 %}Clear{% elif w.visibility >= 5 %}Moderate{% else %}Poor{% endif %}</p>
+                </div>
+              </div>
+
+              <div class="highlight-card glass-card card-enter" style="animation-delay:.3s">
+                <div class="highlight-icon-wrap cloud-bg"><i class="bi bi-cloud-fill"></i></div>
+                <div class="highlight-body">
+                  <p class="highlight-label">Cloud Cover</p>
+                  <p class="highlight-value">{{ w.cloud_cover }}<span class="highlight-unit">%</span></p>
+                  <div class="highlight-bar"><div class="highlight-bar-fill cloud-fill" style="width:{{ w.cloud_cover }}%"></div></div>
+                  <p class="highlight-note">{% if w.cloud_cover < 20 %}Clear sky{% elif w.cloud_cover < 50 %}Partly cloudy{% elif w.cloud_cover < 80 %}Mostly cloudy{% else %}Overcast{% endif %}</p>
+                </div>
+              </div>
+
+              <div class="highlight-card glass-card card-enter" style="animation-delay:.35s">
+                <div class="highlight-icon-wrap uv-bg"><i class="bi bi-sun-fill"></i></div>
+                <div class="highlight-body">
+                  <p class="highlight-label">UV Index</p>
+                  <p class="highlight-value">{{ w.uv_index }}<span class="highlight-unit">/11+</span></p>
+                  <p class="highlight-note">{% if w.uv_index <= 2 %}Low — Safe{% elif w.uv_index <= 5 %}Moderate{% elif w.uv_index <= 7 %}High{% elif w.uv_index <= 10 %}Very High{% else %}Extreme{% endif %}</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- 3-DAY FORECAST -->
+        {% if w.forecast %}
+        <div class="forecast-section">
+          <h3 class="section-title"><i class="bi bi-calendar3 me-2"></i>3-Day Forecast</h3>
+          <div class="row g-3">
+            {% for day in w.forecast %}
+            <div class="col-md-4 col-sm-12">
+              <div class="forecast-card glass-card card-enter {% if loop.first %}forecast-today{% endif %}" style="animation-delay:{{ 0.4 + loop.index0 * 0.1 }}s">
+                <div class="forecast-day-name">
+                  {{ day.day_name }}
+                  {% if loop.first %}<span class="today-badge">Today</span>{% endif %}
+                </div>
+                <div class="forecast-date">{{ day.short_date }}</div>
+                <div class="forecast-emoji">{{ day.emoji }}</div>
+                <div class="forecast-desc">{{ day.desc }}</div>
+                <div class="forecast-temps">
+                  <span class="forecast-max">{{ day.max_c }}°</span>
+                  <span class="forecast-divider">/</span>
+                  <span class="forecast-min">{{ day.min_c }}°</span>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+      

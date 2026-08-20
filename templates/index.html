@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="page-title">
+    {% if weather and weather.success %}
+      {{ weather.city }}, {{ weather.country }} — {{ weather.temp_c }}°C | SkyPulse
+    {% else %}
+      SkyPulse — Live Weather Forecasts Worldwide
+    {% endif %}
+  </title>
+  <meta name="description" content="SkyPulse: real-time weather for any city — temperature, humidity, wind, UV, 3-day forecasts." />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=4.1" />
+  <style>
+    .ac-city-name { color: #ffffff !important; font-weight: 600 !important; }
+    .ac-highlight { color: #60a5fa !important; font-weight: 700 !important; }
+  </style>
+</head>
+
+<body class="bg-{{ weather.category if weather and weather.success else 'default' }}"
+      id="main-body"
+      data-category="{{ weather.category if weather and weather.success else 'default' }}"
+      data-temp-c="{{ weather.temp_c if weather and weather.success else '' }}"
+      data-temp-f="{{ weather.temp_f if weather and weather.success else '' }}"
+      data-feels-c="{{ weather.feels_like_c if weather and weather.success else '' }}"
+      data-feels-f="{{ weather.feels_like_f if weather and weather.success else '' }}">
+
+  <!-- Floating Particles -->
+  <div class="particles-container" id="particles-container" aria-hidden="true"></div>
+
+  <!-- ===================== NAV ===================== -->
+  <nav class="navbar navbar-expand-lg glass-nav sticky-top" id="main-nav">
+    <div class="container-xl">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="/" id="nav-brand">
+        <span class="brand-icon">🌤️</span>
+        <span class="brand-text">SkyPulse</span>
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+        <i class="bi bi-list text-white fs-4"></i>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <ul class="navbar-nav me-auto ms-3 gap-1">
+          <li class="nav-item"><a class="nav-link active" href="/"><i class="bi bi-house-fill me-1"></i>Home</a></li>
+        </ul>
+        <form class="d-flex align-items-center gap-2 nav-search-form" id="nav-search-form" onsubmit="handleSearch(event,'nav')">
+          <div class="nav-search-wrapper">
+            <i class="bi bi-search nav-search-icon"></i>
+            <input type="text" class="form-control nav-search-input" id="nav-search-input" placeholder="Quick search…" autocomplete="off" />
+          </div>
+          <button type="submit" class="btn btn-glow-sm" id="nav-search-btn"><i class="bi bi-arrow-right"></i></button>
+        </form>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===================== HERO ===================== -->
+  <section class="hero-section" id="hero">
+    <div class="container-xl">
+      <div class="hero-content text-center">
+
+        <div class="hero-badge fade-in-up" style="animation-delay:.1s">
+          <span class="badge-dot"></span>
+          <span>Live Weather · Powered by Open-Meteo</span>
+        </div>
+
+        <h1 class="hero-title fade-in-up" style="animation-delay:.2s">
+          Know Your<br /><span class="gradient-text">Sky Instantly</span>
+        </h1>
+        <p class="hero-subtitle fade-in-up" style="animation-delay:.3s">
+          Real-time weather for any city on Earth — temperature, humidity,<br class="d-none d-md-block" />
+          wind, UV index, sunrise, sunset &amp; 3-day forecasts.
+        </p>
+
+        <!-- SEARCH BAR -->
+        <div class="search-container fade-in-up" style="animation-delay:.4s">
+          <form id="hero-search-form" onsubmit="handleSearch(event,'hero')" role="search">
+            <input type="hidden" id="hero-lat"       name="lat" />
+            <input type="hidden" id="hero-lon"       name="lon" />
+            <input type="hidden" id="hero-city-name" name="city_name" />
+            <input type="hidden" id="hero-country"   name="country" />
+            <input type="hidden" id="hero-admin1"    name="admin1" />
+            <input type="hidden" id="hero-tz"        name="tz" />
+
+            <div class="autocomplete-wrapper" id="hero-ac-wrapper">
+              <div class="search-glass-wrapper">
+                <i class="bi bi-geo-alt-fill search-location-icon"></i>
+                <input type="text" class="search-input" id="hero-search-input" name="city"
+                       placeholder="Search any city… London, New York, Mumbai, Tokyo"
+                       autocomplete="off" spellcheck="false"
+                       aria-label="City name" aria-autocomplete="list"
+                       aria-controls="hero-autocomplete-list" aria-expanded="false" autofocus />
+                <button type="submit" class="search-btn" id="search-submit-btn">
+                  <span class="btn-text"><i class="bi bi-search me-2"></i>Search</span>
+                  <span class="btn-loading d-none"><span class="spinner-border spinner-border-sm me-2"></span>Fetching…</span>
+                </button>
+              </div>
+              <div class="autocomplete-dropdown" id="hero-autocomplete-list" role="listbox" style="display:none;"></div>
+            </div>
+          </form>
+
+          <div class="recent-searches" id="recent-searches-container">
+            <p class="recent-label">Recent:</p>
+            <div class="recent-chips" id="recent-chips"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="hero-blob blob-1" aria-hidden="true"></div>
+    <div class="hero-blob blob-2" aria-hidden="true"></div>
+    <div class="hero-blob blob-3" aria-hidden="true"></div>
+  </section>
+
+  <!-- ===================== LOADING ===================== -->
+  <div class="loading-overlay" id="loading-overlay" role="status" aria-live="polite">
+    <div class="loading-card glass-card">
+      <div class="loading-spinner-wrap">
+        <div class="loading-ring"></div>
+        <div class="loading-ring"></div>
+        <div class="loading-ring"></div>
+        <span class="loading-emoji">🌍</span>
+      </div>
+      <p class="loading-text">Fetching weather…</p>
+      <p class="loading-subtext">Connecting to global servers</p>
+    </div>
+  </div>
+
+  <!-- ===================== RESULTS ===================== -->
+  <section class="results-section" id="results-section">
+    <div class="container-xl">
+
+      {% if weather and weather.error %}
+      <div class="error-card glass-card card-enter" id="error-card">
+        <span class="error-emoji">😕</span>
+        <h2 class="error-title">City Not Found</h2>
+        <p class="error-message">{{ weather.error }}</p>
+        <div class="mt-3 d-flex justify-content-center gap-3 flex-wrap">
+          <a href="/" class="btn btn-glow"><i class="bi bi-house-fill me-2"></i>Try Again</a>
+        </div>
+        <p class="error-hint mt-3">Try: <em>London, New York, Tokyo, Paris, Mumbai, Dubai</em></p>
+      </div>
+      {% endif %}
+
+      {% if weather and weather.success %}
+      <div class="weather-results" id="weather-results">
+
+        <!-- Compare Action Bar -->
+        {% if not compare_weather %}
+        <div class="compare-action-bar text-center mb-4 fade-in-up" style="animation-delay:.05s">
+          <button type="button" class="btn btn-glow-sm" id="btn-show-compare" onclick="document.getElementById('compare-search-container').style.display='block'; this.style.display='none'; document.getElementById('compare-search-input').focus();">
+            <i class="bi bi-layout-split me-2"></i>Compare City
+          </button>
+          
+          <div id="compare-search-container" style="display:none; max-width:500px; margin:1rem auto 0;">
+            <form id="compare-search-form" onsubmit="handleSearch(event,'compare')" role="search">
+              <input type="hidden" id="compare-lat" name="compare_lat" />
+              <input type="hidden" id="compare-lon" name="compare_lon" />
+              <input type="hidden" id="compare-city-name" name="compare_name" />
+              <input type="hidden" id="compare-country" name="compare_country" />
+              <input type="hidden" id="compare-admin1" name="compare_admin1" />
+              <input type="hidden" id="compare-tz" name="compare_tz" />
+              
+              <div class="autocomplete-wrapper" id="compare-ac-wrapper">
+                <div class="search-glass-wrapper" style="padding:4px 4px 4px 16px;">
+                  <i class="bi bi-search search-location-icon" style="font-size:0.9rem;"></i>
+                  <input type="text" class="search-input" id="compare-search-input" name="compare"
+                         placeholder="Enter second city..." autocomplete="off" spellcheck="false"
+                         aria-label="Second city name" style="font-size:0.95rem; padding:0.4rem 0;" />
+                  <!-- Hidden inputs to preserve the primary city in the GET request -->
+                  <input type="hidden" name="city" value="{{ request.args.get('city') }}" />
+                  {% if request.args.get('lat') %}
+                  <input type="hidden" name="lat" value="{{ request.args.get('lat') }}" />
+                  <input type="hidden" name="lon" value="{{ request.args.get('lon') }}" />
+                  <input type="hidden" name="city_name" value="{{ request.args.get('city_name', '') }}" />
+                  <input type="hidden" name="country" value="{{ request.args.get('country', '') }}" />
+                  <input type="hidden" name="admin1" value="{{ request.args.get('admin1', '') }}" />
+                  <input type="hidden" name="tz" value="{{ request.args.get('tz', '') }}" />
+                  {% endif %}
+                  <button type="submit" class="search-btn btn-glow-sm" style="padding:0.4rem 1rem;">
+                    <span class="btn-text">Add</span>
+                    <span class="btn-loading d-none"><span class="spinner-border spinner-border-sm"></span></span>
+                  </button>
+                </div>
+                <div class="autocomplete-dropdown" id="compare-autocomplete-list" role="listbox" style="display:none;"></div>
+              </div>
+            </form>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if compare_weather and compare_weather.success %}
+          <div class="row g-4 mb-4">
+            <!-- First City -->
+            <div class="col-lg-6 compare-column">
+               <h3 class="text-center mb-3 text-white" style="font-family:var(--font-primary); font-size:1.2rem;">
+                  <span class="badge" style="background:rgba(255,255,255,0.15)">{{ weather.city }}</span>
+               </h3>
+               {% set w = weather %}
+               {% set is_compare = True %}
+               {% include 'weather_panel.html' %}
+            </div>
+            <!-- Second City -->
+            <div class="col-lg-6 compare-column">
+               <h3 class="text-center mb-3 text-white" style="font-family:var(--font-primary); font-size:1.2rem;">
+                  <span class="badge" style="background:rgba(255,255,255,0.15)">{{ compare_weather.city }}</span>
+                  <a href="/?city={{ request.args.get('city','') }}&lat={{ request.args.get('lat','') }}&lon={{ request.args.get('lon','') }}&city_name={{ request.args.get('city_name','') }}&country={{ request.args.get('country','') }}&admin1={{ request.args.get('admin1','') }}" class="btn btn-sm btn-link text-white ms-2" style="text-decoration:none;" title="Remove comparison">
+                    <i class="bi bi-x-circle-fill"></i>
+                  </a>
+               </h3>
+               {% set w = compare_weather %}
+               {% set is_compare = True %}
+               {% include 'weather_panel.html' %}
+            </div>
+          </div>
+        {% else %}
+           {% if compare_weather and compare_weather.error %}
+           <div class="alert alert-danger" style="background:rgba(220,38,38,0.2); border:1px solid rgba(220,38,38,0.5); color:#fff; border-radius:12px; margin-bottom:1rem;">
+             Error fetching second city: {{ compare_weather.error }}
+           </div>
+           {% endif %}
+           
+           {% set w = weather %}
+           {% set is_compare = False %}
+           {% include 'weather_panel.html' %}
+        {% endif %}
+
+      </div>
+      {% endif %}
+
+    </div>
+  </section>
+
+  <!-- FEATURES (home page only) -->
+  {% if not weather %}
+  <section class="features-section" id="features-section">
+    <div class="container-xl">
+      <div class="text-center mb-5">
+        <h2 class="section-heading fade-in-up">Everything About Your Sky</h2>
+        <p class="section-subheading fade-in-up">Comprehensive weather data at your fingertips</p>
+      </div>
+      <div class="row g-4 justify-content-center">
+        {% for feat in [('🌡️','Real-Time Data','Live conditions from global weather stations.'),('📅','3-Day Forecast','Plan ahead with daily highs, lows and conditions.'),('🌍','Global Coverage','Any city worldwide — no API key needed.'),('☀️','UV & Sun Data','UV index, sunrise and sunset for your location.'),('🕒','Search History','Recent cities saved locally for instant access.'),('📱','Fully Responsive','Looks beautiful on any device.')] %}
+        <div class="col-lg-4 col-md-6">
+          <div class="feature-card glass-card fade-in-up" style="animation-delay:{{ loop.index0 * 0.08 }}s">
+            <div class="feature-icon-wrap">{{ feat[0] }}</div>
+            <h3 class="feature-title">{{ feat[1] }}</h3>
+            <p class="feature-desc">{{ feat[2] }}</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- FOOTER -->
+  <footer class="site-footer" id="site-footer">
+    <div class="container-xl">
+      <div class="footer-inner">
+        <div class="footer-brand"><span class="brand-icon">🌤️</span><span class="brand-text">SkyPulse</span></div>
+        <p class="footer-tagline">Powered by <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> · No API key needed</p>
+        <p class="footer-copy">&copy; 2024 SkyPulse Weather · Built with Flask &amp; ❤️</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Weather data bridge for JS -->
+  <script id="weather-data-json" type="application/json">{{ weather | tojson if weather else 'null' }}</script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+  <script src="{{ url_for('static', filename='script.js') }}?v=4.2"></script>
+</body>
+</html>
