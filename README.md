@@ -222,6 +222,3 @@ MIT License — feel free to use, modify, and distribute.
 
 ---
 
-<p align="center">
-  Built with ❤️ using <strong>Flask</strong> · <strong>Bootstrap 5</strong> · <strong>wttr.in</strong>
-</p>
